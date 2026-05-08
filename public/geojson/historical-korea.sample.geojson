@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "joseon-state",
+        "eraId": "joseon",
+        "stateId": "joseon-state",
+        "name": "Joseon",
+        "capital": "Hanyang",
+        "color": "#6ea8fe"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [124.4, 42.0],
+            [129.9, 42.5],
+            [130.8, 37.5],
+            [129.4, 34.1],
+            [126.1, 33.1],
+            [124.2, 36.0],
+            [124.4, 42.0]
+          ]
+        ]
+      }
+    }
+  ]
+}
