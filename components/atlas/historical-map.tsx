@@ -24,12 +24,15 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const [ready, setReady] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const collection = useMemo(() => getEraFeatureCollection(era.id), [era.id]);
 
   useEffect(() => {
     if (!token || !containerRef.current || mapRef.current) return;
 
+    setMapFailed(false);
+    setReady(false);
     mapboxgl.accessToken = token;
     const map = new mapboxgl.Map({
       container: containerRef.current,
@@ -44,6 +47,21 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
     mapRef.current = map;
+
+    const handleClick = (event: MapLayerMouseEvent) => {
+      const feature = event.features?.[0] as Feature | undefined;
+      const properties = feature?.properties as { stateId?: string; name?: string; capital?: string; color?: string } | undefined;
+      if (!properties?.stateId) return;
+
+      onSelectState(properties.stateId);
+      popupRef.current?.remove();
+      popupRef.current = new mapboxgl.Popup({ closeButton: false, offset: 18 })
+        .setLngLat(event.lngLat)
+        .setHTML(
+          `<div style="min-width:180px"><strong style="font-size:14px">${properties.name}</strong><p style="margin:6px 0 0;color:rgba(239,246,244,.68);font-size:12px">Capital: ${properties.capital}</p></div>`
+        )
+        .addTo(map);
+    };
 
     map.on("load", () => {
       map.addSource(sourceId, {
@@ -73,35 +91,30 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
       });
 
       setReady(true);
+
+      // Layer-specific events must be registered only after the layer exists.
+      map.on("click", fillLayerId, handleClick);
+      map.on("mouseenter", fillLayerId, () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", fillLayerId, () => {
+        map.getCanvas().style.cursor = "";
+      });
     });
 
-    const handleClick = (event: MapLayerMouseEvent) => {
-      const feature = event.features?.[0] as Feature | undefined;
-      const properties = feature?.properties as { stateId?: string; name?: string; capital?: string; color?: string } | undefined;
-      if (!properties?.stateId) return;
-
-      onSelectState(properties.stateId);
+    map.on("error", () => {
       popupRef.current?.remove();
-      popupRef.current = new mapboxgl.Popup({ closeButton: false, offset: 18 })
-        .setLngLat(event.lngLat)
-        .setHTML(
-          `<div style="min-width:180px"><strong style="font-size:14px">${properties.name}</strong><p style="margin:6px 0 0;color:rgba(239,246,244,.68);font-size:12px">Capital: ${properties.capital}</p></div>`
-        )
-        .addTo(map);
-    };
-
-    map.on("click", fillLayerId, handleClick);
-    map.on("mouseenter", fillLayerId, () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-    map.on("mouseleave", fillLayerId, () => {
-      map.getCanvas().style.cursor = "";
+      map.remove();
+      mapRef.current = null;
+      setMapFailed(true);
     });
 
     return () => {
       popupRef.current?.remove();
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current === map) {
+        map.remove();
+        mapRef.current = null;
+      }
     };
   }, [collection, onSelectState, selectedStateId, token]);
 
@@ -115,8 +128,15 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
     popupRef.current?.remove();
   }, [collection, ready, selectedStateId]);
 
-  if (!token) {
-    return <FallbackMap era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />;
+  if (!token || mapFailed) {
+    return (
+      <FallbackMap
+        era={era}
+        selectedStateId={selectedStateId}
+        onSelectState={onSelectState}
+        reason={mapFailed ? "Mapbox could not load. Check your Vercel token, URL restrictions, and redeploy." : undefined}
+      />
+    );
   }
 
   return (
@@ -139,11 +159,13 @@ function MapOverlay({ era }: { era: Era }) {
 function FallbackMap({
   era,
   selectedStateId,
-  onSelectState
+  onSelectState,
+  reason
 }: {
   era: Era;
   selectedStateId: string | null;
   onSelectState: (stateId: string) => void;
+  reason?: string;
 }) {
   return (
     <div className="relative min-h-[34rem] overflow-hidden rounded-md border border-white/10 bg-[#071013]">
@@ -206,7 +228,7 @@ function FallbackMap({
 
       <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3 rounded-md border border-white/10 bg-ink/80 p-3 text-sm text-white/60 backdrop-blur-xl">
         <MapPinned size={17} className="text-jade" />
-        Add `NEXT_PUBLIC_MAPBOX_TOKEN` to `.env.local` for the live Mapbox layer.
+        {reason ?? "Add `NEXT_PUBLIC_MAPBOX_TOKEN` locally or in Vercel for the live Mapbox layer."}
       </div>
     </div>
   );

@@ -20,7 +20,11 @@ Add a Mapbox public token to `NEXT_PUBLIC_MAPBOX_TOKEN` for the live map. Withou
    - `NEXT_PUBLIC_MAPBOX_TOKEN`
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Deploy with the default Next.js build command.
+4. Redeploy after adding or changing environment variables. Next.js bakes `NEXT_PUBLIC_*` values into the browser bundle at build time.
+5. If the Mapbox token uses URL restrictions, allow your Vercel production domain and any preview domains you plan to use.
+6. Deploy with the default Next.js build command.
+
+If Mapbox cannot load in production, Hanistry falls back to the built-in SVG atlas and shows a diagnostic message at the bottom of the map panel.
 
 ## GeoJSON Data
 
