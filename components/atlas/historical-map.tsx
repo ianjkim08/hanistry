@@ -56,6 +56,14 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
     mapRef.current = map;
 
+    // Mapbox can measure the container too early in responsive layouts.
+    // Keep it synced so the canvas fills the full atlas panel after deploy.
+    const resizeObserver = new ResizeObserver(() => {
+      map.resize();
+    });
+    resizeObserver.observe(containerRef.current);
+    window.requestAnimationFrame(() => map.resize());
+
     const handleClick = (event: MapLayerMouseEvent) => {
       const feature = event.features?.[0] as Feature | undefined;
       const properties = feature?.properties as { stateId?: string; name?: string; capital?: string; color?: string } | undefined;
@@ -99,6 +107,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
       });
 
       window.clearTimeout(loadFallbackTimer);
+      map.resize();
       setReady(true);
 
       // Layer-specific events must be registered only after the layer exists.
@@ -121,6 +130,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
 
     return () => {
       window.clearTimeout(loadFallbackTimer);
+      resizeObserver.disconnect();
       popupRef.current?.remove();
       if (mapRef.current === map) {
         map.remove();
@@ -151,7 +161,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
   }
 
   return (
-    <div className="relative min-h-[34rem] overflow-hidden rounded-md border border-white/10 bg-black/40">
+    <div className="relative h-[34rem] overflow-hidden rounded-md border border-white/10 bg-black/40">
       {!ready ? (
         <div className="absolute inset-0">
           <FallbackMapCanvas era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />
@@ -159,7 +169,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
       ) : null}
       <div
         ref={containerRef}
-        className={`absolute inset-0 transition-opacity duration-500 ${ready ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${ready ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <MapOverlay era={era} />
     </div>
@@ -187,7 +197,7 @@ function FallbackMap({
   reason?: string;
 }) {
   return (
-    <div className="relative min-h-[34rem] overflow-hidden rounded-md border border-white/10 bg-[#071013]">
+    <div className="relative h-[34rem] overflow-hidden rounded-md border border-white/10 bg-[#071013]">
       <FallbackMapCanvas era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />
       <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-jade/10 to-transparent" />
       <MapOverlay era={era} />
