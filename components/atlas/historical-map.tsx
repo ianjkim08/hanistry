@@ -33,6 +33,14 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
 
     setMapFailed(false);
     setReady(false);
+    const loadFallbackTimer = window.setTimeout(() => {
+      if (!mapRef.current || !mapRef.current.loaded()) {
+        mapRef.current?.remove();
+        mapRef.current = null;
+        setMapFailed(true);
+      }
+    }, 5000);
+
     mapboxgl.accessToken = token;
     const map = new mapboxgl.Map({
       container: containerRef.current,
@@ -90,6 +98,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
         }
       });
 
+      window.clearTimeout(loadFallbackTimer);
       setReady(true);
 
       // Layer-specific events must be registered only after the layer exists.
@@ -103,6 +112,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
     });
 
     map.on("error", () => {
+      window.clearTimeout(loadFallbackTimer);
       popupRef.current?.remove();
       map.remove();
       mapRef.current = null;
@@ -110,6 +120,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
     });
 
     return () => {
+      window.clearTimeout(loadFallbackTimer);
       popupRef.current?.remove();
       if (mapRef.current === map) {
         map.remove();
@@ -141,7 +152,15 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
 
   return (
     <div className="relative min-h-[34rem] overflow-hidden rounded-md border border-white/10 bg-black/40">
-      <div ref={containerRef} className="absolute inset-0" />
+      {!ready ? (
+        <div className="absolute inset-0">
+          <FallbackMapCanvas era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />
+        </div>
+      ) : null}
+      <div
+        ref={containerRef}
+        className={`absolute inset-0 transition-opacity duration-500 ${ready ? "opacity-100" : "pointer-events-none opacity-0"}`}
+      />
       <MapOverlay era={era} />
     </div>
   );
@@ -169,10 +188,30 @@ function FallbackMap({
 }) {
   return (
     <div className="relative min-h-[34rem] overflow-hidden rounded-md border border-white/10 bg-[#071013]">
-      <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(239,246,244,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(239,246,244,.08)_1px,transparent_1px)] [background-size:48px_48px]" />
+      <FallbackMapCanvas era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />
       <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-jade/10 to-transparent" />
       <MapOverlay era={era} />
 
+      <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3 rounded-md border border-white/10 bg-ink/80 p-3 text-sm text-white/60 backdrop-blur-xl">
+        <MapPinned size={17} className="text-jade" />
+        {reason ?? "Add `NEXT_PUBLIC_MAPBOX_TOKEN` locally or in Vercel for the live Mapbox layer."}
+      </div>
+    </div>
+  );
+}
+
+function FallbackMapCanvas({
+  era,
+  selectedStateId,
+  onSelectState
+}: {
+  era: Era;
+  selectedStateId: string | null;
+  onSelectState: (stateId: string) => void;
+}) {
+  return (
+    <>
+      <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(239,246,244,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(239,246,244,.08)_1px,transparent_1px)] [background-size:48px_48px]" />
       <svg viewBox="0 0 620 620" className="absolute inset-0 h-full w-full">
         <defs>
           <filter id="softGlow">
@@ -225,12 +264,7 @@ function FallbackMap({
           </motion.g>
         </AnimatePresence>
       </svg>
-
-      <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3 rounded-md border border-white/10 bg-ink/80 p-3 text-sm text-white/60 backdrop-blur-xl">
-        <MapPinned size={17} className="text-jade" />
-        {reason ?? "Add `NEXT_PUBLIC_MAPBOX_TOKEN` locally or in Vercel for the live Mapbox layer."}
-      </div>
-    </div>
+    </>
   );
 }
 
