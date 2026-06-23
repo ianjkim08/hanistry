@@ -26,8 +26,8 @@ export default function HomePage() {
           </div>
 
           <div className="relative min-h-[27rem] overflow-hidden border-t border-line lg:col-span-6 lg:min-h-full lg:border-l lg:border-t-0">
-            <div className="absolute inset-0 bg-[url('/geojson/map-texture.svg')] bg-cover bg-center opacity-85" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,22,.32),transparent_35%),linear-gradient(180deg,transparent_55%,rgba(15,23,22,.72))]" />
+            <div className="absolute inset-0 bg-[url('/geojson/map-texture.svg')] bg-cover bg-center" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_42%,rgba(210,173,99,.09),transparent_32%),linear-gradient(90deg,rgba(15,23,22,.18),transparent_35%),linear-gradient(180deg,transparent_55%,rgba(15,23,22,.58))]" />
             <div className="absolute bottom-7 left-6 right-6 flex items-end justify-between border-t border-white/30 pt-4 text-xs text-white/75 sm:left-8 sm:right-8">
               <span>Korean Peninsula</span>
               <span>33°-48° N</span>

@@ -23,24 +23,23 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
+  const onSelectStateRef = useRef(onSelectState);
+  const selectedStateIdRef = useRef(selectedStateId);
+  const collectionRef = useRef(getEraFeatureCollection(era.id));
   const [ready, setReady] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const collection = useMemo(() => getEraFeatureCollection(era.id), [era.id]);
+
+  onSelectStateRef.current = onSelectState;
+  selectedStateIdRef.current = selectedStateId;
+  collectionRef.current = collection;
 
   useEffect(() => {
     if (!token || !containerRef.current || mapRef.current) return;
 
     setMapFailed(false);
     setReady(false);
-    const loadFallbackTimer = window.setTimeout(() => {
-      if (!mapRef.current || !mapRef.current.loaded()) {
-        mapRef.current?.remove();
-        mapRef.current = null;
-        setMapFailed(true);
-      }
-    }, 5000);
-
     mapboxgl.accessToken = token;
     const map = new mapboxgl.Map({
       container: containerRef.current,
@@ -51,6 +50,23 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
       bearing: -8,
       attributionControl: false
     });
+
+    let disposed = false;
+    let hasLoaded = false;
+    let hasFailed = false;
+
+    const failMap = () => {
+      if (disposed || hasLoaded || hasFailed) return;
+      hasFailed = true;
+      window.clearTimeout(loadFallbackTimer);
+      map.off("error", failMap);
+      popupRef.current?.remove();
+      if (mapRef.current === map) mapRef.current = null;
+      map.remove();
+      setMapFailed(true);
+    };
+
+    const loadFallbackTimer = window.setTimeout(failMap, 5000);
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-left");
@@ -69,7 +85,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
       const properties = feature?.properties as { stateId?: string; name?: string; capital?: string; color?: string } | undefined;
       if (!properties?.stateId) return;
 
-      onSelectState(properties.stateId);
+      onSelectStateRef.current(properties.stateId);
       popupRef.current?.remove();
       popupRef.current = new mapboxgl.Popup({ closeButton: false, offset: 18 })
         .setLngLat(event.lngLat)
@@ -80,9 +96,11 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
     };
 
     map.on("load", () => {
+      if (disposed || hasFailed) return;
+      hasLoaded = true;
       map.addSource(sourceId, {
         type: "geojson",
-        data: collection
+        data: collectionRef.current
       });
 
       map.addLayer({
@@ -102,7 +120,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
         paint: {
           "line-color": ["get", "color"],
           "line-opacity": 0.95,
-          "line-width": ["case", ["==", ["get", "stateId"], selectedStateId ?? ""], 4, 2]
+          "line-width": ["case", ["==", ["get", "stateId"], selectedStateIdRef.current ?? ""], 4, 2]
         }
       });
 
@@ -120,24 +138,20 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
       });
     });
 
-    map.on("error", () => {
-      window.clearTimeout(loadFallbackTimer);
-      popupRef.current?.remove();
-      map.remove();
-      mapRef.current = null;
-      setMapFailed(true);
-    });
+    map.on("error", failMap);
 
     return () => {
+      disposed = true;
       window.clearTimeout(loadFallbackTimer);
       resizeObserver.disconnect();
+      map.off("error", failMap);
       popupRef.current?.remove();
       if (mapRef.current === map) {
         map.remove();
         mapRef.current = null;
       }
     };
-  }, [collection, onSelectState, selectedStateId, token]);
+  }, [token]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -145,7 +159,9 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
 
     const source = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined;
     source?.setData(collection);
-    map.setPaintProperty(lineLayerId, "line-width", ["case", ["==", ["get", "stateId"], selectedStateId ?? ""], 4, 2]);
+    if (map.getLayer(lineLayerId)) {
+      map.setPaintProperty(lineLayerId, "line-width", ["case", ["==", ["get", "stateId"], selectedStateId ?? ""], 4, 2]);
+    }
     popupRef.current?.remove();
   }, [collection, ready, selectedStateId]);
 
