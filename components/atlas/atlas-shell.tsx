@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { AmbienceToggle } from "@/components/atlas/ambience-toggle";
@@ -21,37 +21,26 @@ export function AtlasShell() {
   };
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <main className="mx-auto max-w-[1600px] px-3 py-5 sm:px-5 lg:px-7">
+      <header className="mb-5 grid gap-4 border-b border-line pb-5 md:grid-cols-[1fr_auto] md:items-end">
         <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-jade/80">Interactive Historical Atlas</p>
-          <h1 className="mt-3 max-w-3xl font-display text-4xl leading-tight text-white sm:text-6xl">
-            Explore Korean history through borders, capitals, and time.
+          <p className="atlas-kicker">Interactive historical atlas</p>
+          <h1 className="mt-3 max-w-4xl font-display text-3xl leading-tight tracking-[-0.025em] text-paper sm:text-4xl">
+            Korean history in place and time.
           </h1>
         </div>
         <div className="flex items-center gap-2">
           <AmbienceToggle />
-          <a
-            href={`/eras/${activeEra.slug}`}
-            className="inline-flex h-10 items-center gap-2 rounded-md border border-white/10 bg-white/[0.06] px-3 text-sm text-white/75 transition hover:border-jade/40 hover:text-white"
-          >
-            <CalendarDays size={16} />
-            Era Detail
-          </a>
+          <Link href={`/eras/${activeEra.slug}`} className="atlas-button atlas-button-secondary h-10 min-h-10 px-3">
+            <CalendarDays size={16} strokeWidth={1.6} /> Era detail
+          </Link>
         </div>
-      </section>
+      </header>
 
       <TimelineSlider activeIndex={activeIndex} onChange={changeEra} />
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <motion.div
-          key={activeEra.id}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <HistoricalMap era={activeEra} selectedStateId={selectedStateId} onSelectState={setSelectedStateId} />
-        </motion.div>
+      <section className="mt-4 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_23rem]">
+        <HistoricalMap era={activeEra} selectedStateId={selectedStateId} onSelectState={setSelectedStateId} />
         <InfoSidebar era={activeEra} selectedStateId={selectedStateId} onSelectState={setSelectedStateId} />
       </section>
     </main>

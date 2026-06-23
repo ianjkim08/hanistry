@@ -161,7 +161,7 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
   }
 
   return (
-    <div className="relative h-[34rem] overflow-hidden rounded-md border border-white/10 bg-black/40">
+    <div className="relative h-[68dvh] min-h-[32rem] min-w-0 w-full overflow-hidden border border-line bg-ink xl:h-[calc(100dvh-7rem)] xl:min-h-[42rem]">
       {!ready ? (
         <div className="absolute inset-0">
           <FallbackMapCanvas era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />
@@ -178,9 +178,9 @@ export function HistoricalMap({ era, selectedStateId, onSelectState }: Historica
 
 function MapOverlay({ era }: { era: Era }) {
   return (
-    <div className="pointer-events-none absolute left-4 top-4 rounded-md border border-white/10 bg-ink/75 px-4 py-3 backdrop-blur-xl">
-      <p className="text-xs uppercase tracking-[0.24em] text-jade/80">Active Layer</p>
-      <p className="mt-1 font-display text-2xl text-white">{era.name}</p>
+    <div className="pointer-events-none absolute left-4 top-4 border border-line bg-ink/90 px-4 py-3 backdrop-blur-md">
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-accent">Active layer</p>
+      <p className="mt-1 font-display text-2xl text-paper">{era.name}</p>
     </div>
   );
 }
@@ -197,13 +197,13 @@ function FallbackMap({
   reason?: string;
 }) {
   return (
-    <div className="relative h-[34rem] overflow-hidden rounded-md border border-white/10 bg-[#071013]">
+    <div className="relative h-[68dvh] min-h-[32rem] min-w-0 w-full overflow-hidden border border-line bg-ink xl:h-[calc(100dvh-7rem)] xl:min-h-[42rem]">
       <FallbackMapCanvas era={era} selectedStateId={selectedStateId} onSelectState={onSelectState} />
-      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-jade/10 to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-accent/10 to-transparent" />
       <MapOverlay era={era} />
 
-      <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3 rounded-md border border-white/10 bg-ink/80 p-3 text-sm text-white/60 backdrop-blur-xl">
-        <MapPinned size={17} className="text-jade" />
+      <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3 border border-line bg-ink/90 p-3 text-sm text-muted backdrop-blur-md">
+        <MapPinned size={17} strokeWidth={1.5} className="text-accent" />
         {reason ?? "Add `NEXT_PUBLIC_MAPBOX_TOKEN` locally or in Vercel for the live Mapbox layer."}
       </div>
     </div>
@@ -221,17 +221,8 @@ function FallbackMapCanvas({
 }) {
   return (
     <>
-      <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(239,246,244,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(239,246,244,.08)_1px,transparent_1px)] [background-size:48px_48px]" />
+      <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(237,240,232,.07)_1px,transparent_1px),linear-gradient(90deg,rgba(237,240,232,.07)_1px,transparent_1px)] [background-size:48px_48px]" />
       <svg viewBox="0 0 620 620" className="absolute inset-0 h-full w-full">
-        <defs>
-          <filter id="softGlow">
-            <feGaussianBlur stdDeviation="8" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
         <path
           d="M336 71 C430 117 471 196 454 291 C438 378 391 480 299 536 C235 493 199 424 203 334 C207 237 245 148 336 71 Z"
           fill="rgba(239,246,244,0.04)"
@@ -244,7 +235,6 @@ function FallbackMapCanvas({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.03 }}
             transition={{ duration: 0.35 }}
-            filter="url(#softGlow)"
           >
             {era.states.map((state, index) => {
               const selected = selectedStateId === state.id || (!selectedStateId && index === 0);

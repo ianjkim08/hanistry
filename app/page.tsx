@@ -1,78 +1,94 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Globe2, Layers3 } from "lucide-react";
+import { ArrowRight, BookOpenText, Map, MoveRight } from "lucide-react";
 import { eras } from "@/data/history";
 
 export default function HomePage() {
   return (
-    <main>
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0">
-          <div className="h-full w-full bg-[linear-gradient(120deg,rgba(98,210,162,.16),rgba(110,168,254,.08)_45%,rgba(217,115,165,.12)),url('/geojson/map-texture.svg')]" />
-        </div>
-        <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl content-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
-          <div className="max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.3em] text-jade/85">Korean Historical Atlas</p>
-            <h1 className="mt-5 font-display text-6xl leading-[0.96] text-white sm:text-7xl lg:text-8xl">
-              Hanistry
+    <main className="overflow-x-hidden">
+      <section className="atlas-hero relative border-b border-line">
+        <div className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-[1500px] grid-cols-1 lg:grid-cols-12">
+          <div className="relative z-10 flex flex-col justify-center px-5 py-16 sm:px-8 lg:col-span-6 lg:px-12 xl:px-16">
+            <p className="atlas-kicker">An interactive atlas of Korean history</p>
+            <h1 className="mt-6 max-w-[16ch] font-display text-[clamp(3.5rem,7.2vw,7.25rem)] leading-[0.88] tracking-[-0.055em] text-paper">
+              History belongs on a map.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              Move through Korean history with a living map: kingdoms, capitals, regional borders, cultural achievements, and events arranged across time.
+            <p className="mt-7 max-w-xl text-base leading-7 text-muted sm:text-lg">
+              Trace kingdoms, capitals, and cultural change across the Korean peninsula.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/atlas"
-                className="inline-flex h-12 items-center gap-2 rounded-md bg-jade px-5 text-sm font-semibold text-ink transition hover:bg-paper"
-              >
-                Open Atlas
-                <ArrowRight size={17} />
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Link href="/atlas" className="atlas-button atlas-button-primary">
+                Open the atlas <ArrowRight size={17} strokeWidth={1.7} />
               </Link>
-              <Link
-                href="/about"
-                className="inline-flex h-12 items-center rounded-md border border-white/12 bg-white/[0.06] px-5 text-sm font-semibold text-white/80 transition hover:border-white/25 hover:text-white"
-              >
-                Methodology
+              <Link href="/about" className="atlas-button atlas-button-secondary">
+                Read the method
               </Link>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { icon: Globe2, label: "Mapbox atlas", value: "Geographic exploration" },
-              { icon: Layers3, label: "Era layers", value: `${eras.length} seeded eras` },
-              { icon: BookOpen, label: "Academic briefs", value: "Events and culture" }
-            ].map((item) => (
-              <div key={item.label} className="rounded-md border border-white/10 bg-ink/60 p-4 backdrop-blur-xl">
-                <item.icon size={20} className="text-jade" />
-                <p className="mt-3 text-sm font-medium text-white">{item.label}</p>
-                <p className="mt-1 text-sm text-white/50">{item.value}</p>
-              </div>
-            ))}
+          <div className="relative min-h-[27rem] overflow-hidden border-t border-line lg:col-span-6 lg:min-h-full lg:border-l lg:border-t-0">
+            <div className="absolute inset-0 bg-[url('/geojson/map-texture.svg')] bg-cover bg-center opacity-85" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,22,.32),transparent_35%),linear-gradient(180deg,transparent_55%,rgba(15,23,22,.72))]" />
+            <div className="absolute bottom-7 left-6 right-6 flex items-end justify-between border-t border-white/30 pt-4 text-xs text-white/75 sm:left-8 sm:right-8">
+              <span>Korean Peninsula</span>
+              <span>33°-48° N</span>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-jade/80">Timeline</p>
-            <h2 className="mt-3 font-display text-4xl text-white">Featured Eras</h2>
+      <section className="border-b border-line bg-surface py-24 md:py-32">
+        <div className="mx-auto max-w-[1500px] px-5 sm:px-8 lg:px-12 xl:px-16">
+          <h2 className="max-w-4xl font-display text-4xl leading-[1.02] tracking-[-0.035em] text-paper sm:text-5xl lg:text-6xl">
+            Seven eras, one continuous landscape.
+          </h2>
+          <div className="mt-12 overflow-x-auto pb-4">
+            <div className="flex min-w-max border-y border-line">
+              {eras.map((era) => (
+                <Link
+                  key={era.id}
+                  href={`/eras/${era.slug}`}
+                  className="group flex w-64 shrink-0 flex-col justify-between border-r border-line px-5 py-6 transition-colors first:border-l hover:bg-paper/[0.04] sm:w-72"
+                >
+                  <span className="font-mono text-xs text-accent">{era.years}</span>
+                  <span className="mt-14 flex items-end justify-between gap-4 font-display text-2xl text-paper">
+                    {era.name}
+                    <MoveRight size={18} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
-          <Link href="/atlas" className="hidden text-sm text-white/60 transition hover:text-white sm:block">
-            Explore all eras
-          </Link>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {eras.slice(0, 4).map((era) => (
-            <Link
-              key={era.id}
-              href={`/eras/${era.slug}`}
-              className="rounded-md border border-white/10 bg-white/[0.05] p-5 transition hover:-translate-y-1 hover:border-jade/35 hover:bg-white/[0.08]"
-            >
-              <p className="text-sm text-jade">{era.years}</p>
-              <h3 className="mt-3 font-display text-2xl text-white">{era.name}</h3>
-              <p className="mt-3 text-sm leading-6 text-white/55">{era.summary}</p>
+      </section>
+
+      <section className="bg-surface py-24 md:py-36">
+        <div className="mx-auto grid max-w-[1500px] gap-14 px-5 sm:px-8 md:grid-cols-12 lg:px-12 xl:px-16">
+          <div className="md:col-span-5">
+            <Map size={28} strokeWidth={1.4} className="text-accent" />
+            <h2 className="mt-8 max-w-md font-display text-4xl leading-tight tracking-[-0.03em] text-paper sm:text-5xl">
+              Geography as historical evidence.
+            </h2>
+          </div>
+          <div className="md:col-span-6 md:col-start-7">
+            <p className="max-w-2xl text-lg leading-8 text-muted">
+              Hanistry aligns approximate territorial layers with concise historical context. Select an era, inspect a region, and follow the relationship between place and political change.
+            </p>
+            <div className="mt-12 grid gap-8 border-t border-line pt-8 sm:grid-cols-2">
+              <div>
+                <BookOpenText size={22} strokeWidth={1.5} className="text-accent" />
+                <h3 className="mt-5 text-base font-medium text-paper">Curated context</h3>
+                <p className="mt-2 text-sm leading-6 text-muted">Events, capitals, and cultural achievements stay close to the map.</p>
+              </div>
+              <div>
+                <Map size={22} strokeWidth={1.5} className="text-accent" />
+                <h3 className="mt-5 text-base font-medium text-paper">Layered geography</h3>
+                <p className="mt-2 text-sm leading-6 text-muted">Mapbox and GeoJSON provide a durable base for richer sourced boundaries.</p>
+              </div>
+            </div>
+            <Link href="/atlas" className="mt-12 inline-flex items-center gap-3 border-b border-accent pb-2 text-sm font-medium text-paper transition-colors hover:text-accent">
+              Begin exploring <ArrowRight size={16} strokeWidth={1.7} />
             </Link>
-          ))}
+          </div>
         </div>
       </section>
     </main>

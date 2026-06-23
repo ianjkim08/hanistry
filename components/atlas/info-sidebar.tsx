@@ -1,143 +1,63 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Landmark, Search, Sparkles } from "lucide-react";
+import { Landmark, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Era, HistoricalState } from "@/data/history";
 
-type InfoSidebarProps = {
-  era: Era;
-  selectedStateId: string | null;
-  onSelectState: (stateId: string) => void;
-};
+type InfoSidebarProps = { era: Era; selectedStateId: string | null; onSelectState: (stateId: string) => void };
 
 export function InfoSidebar({ era, selectedStateId, onSelectState }: InfoSidebarProps) {
   const [query, setQuery] = useState("");
-
   const filteredStates = useMemo(() => {
     const normalized = query.toLowerCase().trim();
     if (!normalized) return era.states;
-    return era.states.filter((state) =>
-      [state.name, state.capital, state.description, ...state.events, ...state.achievements]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalized)
-    );
+    return era.states.filter((state) => [state.name, state.capital, state.description, ...state.events, ...state.achievements].join(" ").toLowerCase().includes(normalized));
   }, [era.states, query]);
-
-  const selectedState =
-    era.states.find((state) => state.id === selectedStateId) ?? filteredStates[0] ?? era.states[0];
+  const selectedState = era.states.find((state) => state.id === selectedStateId) ?? filteredStates[0] ?? era.states[0];
 
   return (
-    <aside className="flex min-h-[32rem] flex-col rounded-md border border-white/10 bg-ink/70 p-4 backdrop-blur-xl">
-      <div className="flex items-center gap-2 rounded-md border border-white/10 bg-black/20 px-3 py-2">
-        <Search size={16} className="text-white/45" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search kingdoms, events, culture"
-          className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35"
-        />
+    <aside className="flex min-h-[42rem] min-w-0 flex-col border border-line bg-surface xl:h-[calc(100dvh-7rem)] xl:min-h-[42rem] xl:overflow-hidden">
+      <label className="flex items-center gap-2 border-b border-line px-4 py-3">
+        <Search size={16} strokeWidth={1.6} className="text-muted" />
+        <span className="sr-only">Search historical regions</span>
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search regions and events" className="w-full bg-transparent text-sm text-paper outline-none placeholder:text-muted/60" />
+      </label>
+
+      <div className="flex gap-px overflow-x-auto border-b border-line bg-line p-px xl:flex-wrap">
+        {filteredStates.map((state) => <StateButton key={state.id} state={state} selected={state.id === selectedState.id} onClick={() => onSelectState(state.id)} />)}
+        {filteredStates.length === 0 ? <p className="w-full bg-surface px-4 py-5 text-sm text-muted">No regions match this search.</p> : null}
       </div>
 
-      <div className="mt-4 grid gap-2">
-        {filteredStates.map((state) => (
-          <StateButton
-            key={state.id}
-            state={state}
-            selected={state.id === selectedState.id}
-            onClick={() => onSelectState(state.id)}
-          />
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${era.id}-${selectedState.id}`}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.25 }}
-          className="mt-5 flex-1 rounded-md border border-white/10 bg-white/[0.05] p-5"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-jade/80">Selected Region</p>
-              <h3 className="mt-2 font-display text-3xl text-white">{selectedState.name}</h3>
+      {selectedState ? (
+        <AnimatePresence mode="wait">
+          <motion.div key={`${era.id}-${selectedState.id}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }} className="flex-1 overflow-y-auto px-5 py-6">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-accent">Selected region</p>
+                <h3 className="mt-2 font-display text-4xl leading-none text-paper">{selectedState.name}</h3>
+              </div>
+              <Landmark size={22} strokeWidth={1.4} style={{ color: selectedState.color }} />
             </div>
-            <span className="rounded-md border border-white/10 p-2" style={{ color: selectedState.color }}>
-              <Landmark size={20} />
-            </span>
-          </div>
-          <dl className="mt-4 grid gap-3 text-sm">
-            <div>
-              <dt className="text-white/40">Capital</dt>
-              <dd className="text-white/85">{selectedState.capital}</dd>
-            </div>
-            <div>
-              <dt className="text-white/40">Time Period</dt>
-              <dd className="text-white/85">{selectedState.period}</dd>
-            </div>
-          </dl>
-          <p className="mt-4 text-sm leading-6 text-white/68">{selectedState.description}</p>
-
-          <Section title="Major Events" items={selectedState.events} />
-          <Section title="Cultural Achievements" items={selectedState.achievements} />
-
-          <div className="mt-5 rounded-md border border-jade/20 bg-jade/10 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-jade">
-              <Sparkles size={16} />
-              AI summary placeholder
-            </div>
-            <p className="mt-2 text-sm leading-6 text-white/65">
-              Connect a summarization API here to generate source-aware historical briefs from curated records.
-            </p>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+            <dl className="mt-6 grid grid-cols-2 gap-5 border-y border-line py-4 text-sm">
+              <div><dt className="text-xs text-muted">Capital</dt><dd className="mt-1 text-paper">{selectedState.capital}</dd></div>
+              <div><dt className="text-xs text-muted">Period</dt><dd className="mt-1 text-paper">{selectedState.period}</dd></div>
+            </dl>
+            <p className="mt-5 text-sm leading-6 text-muted">{selectedState.description}</p>
+            <InfoSection title="Major events" items={selectedState.events} />
+            <InfoSection title="Cultural achievements" items={selectedState.achievements} />
+            <p className="mt-7 border-t border-line pt-4 text-xs leading-5 text-muted/75">Territorial boundaries are approximate and intended as a foundation for source-verified GeoJSON.</p>
+          </motion.div>
+        </AnimatePresence>
+      ) : null}
     </aside>
   );
 }
 
-function StateButton({
-  state,
-  selected,
-  onClick
-}: {
-  state: HistoricalState;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-md border p-3 text-left transition ${
-        selected
-          ? "border-jade/40 bg-jade/10"
-          : "border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]"
-      }`}
-    >
-      <span className="flex items-center gap-2 text-sm font-medium text-white">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: state.color }} />
-        {state.name}
-      </span>
-      <span className="mt-1 block text-xs text-white/45">{state.capital}</span>
-    </button>
-  );
+function StateButton({ state, selected, onClick }: { state: HistoricalState; selected: boolean; onClick: () => void }) {
+  return <button type="button" onClick={onClick} className={`min-w-[10rem] flex-1 bg-surface px-4 py-3 text-left transition-colors ${selected ? "text-accent" : "text-muted hover:bg-paper/[0.04] hover:text-paper"}`}><span className="block text-sm font-medium">{state.name}</span><span className="mt-1 block truncate text-xs opacity-70">{state.capital}</span></button>;
 }
 
-function Section({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="mt-5">
-      <h4 className="text-sm font-medium text-white">{title}</h4>
-      <div className="mt-2 grid gap-2">
-        {items.map((item) => (
-          <div key={item} className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm text-white/65">
-            {item}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function InfoSection({ title, items }: { title: string; items: string[] }) {
+  return <section className="mt-7"><h4 className="text-sm font-medium text-paper">{title}</h4><ul className="mt-3 space-y-3">{items.map((item) => <li key={item} className="border-l border-accent/55 pl-3 text-sm leading-5 text-muted">{item}</li>)}</ul></section>;
 }
